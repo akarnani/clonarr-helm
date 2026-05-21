@@ -1,8 +1,10 @@
 Clonarr has been deployed!
 
 1. Access the UI:
-{{- if .Values.ingress.enabled }}
-  http{{ if (index .Values.ingress.tls 0) }}s{{ end }}://{{ (index .Values.ingress.hosts 0).host }}
+{{- if .Values.tailscaleIngress.enabled }}
+  https://{{ .Values.tailscaleIngress.hostname }}.<your-tailnet>.ts.net
+{{- else if .Values.ingress.enabled }}
+  http{{ if .Values.ingress.tls }}s{{ end }}://{{ (index .Values.ingress.hosts 0).host }}
 {{- else }}
   kubectl port-forward svc/{{ include "clonarr.fullname" . }} 6060:{{ .Values.service.port }}
   Then open http://localhost:6060
