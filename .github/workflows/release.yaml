@@ -1,0 +1,93 @@
+name: release
+
+# Publish a new chart version when a tag of the form `v<chart>` or
+# `v<chart>+app<appVersion>` is pushed.
+#
+# Examples:
+#   v0.1.0              -> chart version 0.1.0, appVersion from Chart.yaml
+#   v0.2.0+app1.4.2     -> chart version 0.2.0, appVersion 1.4.2
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+
+      - name: Parse versions from tag
+        id: versions
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          # Strip leading "v"
+          rest="${tag#v}"
+          if [[ "$rest" == *"+app"* ]]; then
+            chart_version="${rest%%+app*}"
+            app_version="${rest#*+app}"
+          else
+            chart_version="$rest"
+            app_version="$(awk '/^appVersion:/ {print $2}' Chart.yaml | tr -d '\"')"
+          fi
+          echo "chart_version=$chart_version" >> "$GITHUB_OUTPUT"
+          echo "app_version=$app_version" >> "$GITHUB_OUTPUT"
+          echo "Chart version: $chart_version"
+          echo "App version:   $app_version"
+
+      - name: Substitute versions into Chart.yaml
+        run: |
+          chart_version="${{ steps.versions.outputs.chart_version }}"
+          app_version="${{ steps.versions.outputs.app_version }}"
+          sed -i -E "s/^version:.*/version: ${chart_version}/" Chart.yaml
+          sed -i -E "s/^appVersion:.*/appVersion: \"${app_version}\"/" Chart.yaml
+          echo "--- Chart.yaml after substitution ---"
+          cat Chart.yaml
+
+      - name: helm lint
+        run: helm lint .
+
+      - name: helm package
+        run: helm package . --destination dist
+
+      - name: helm registry login (ghcr.io)
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            helm registry login ghcr.io \
+              --username "${{ github.actor }}" \
+              --password-stdin
+
+      - name: helm push to ghcr.io
+        run: |
+          chart_version="${{ steps.versions.outputs.chart_version }}"
+          owner="${{ github.repository_owner }}"
+          # Lowercase the owner to satisfy OCI naming
+          owner_lc="${owner,,}"
+          helm push "dist/clonarr-${chart_version}.tgz" "oci://ghcr.io/${owner_lc}/charts"
+
+      - name: Summary
+        run: |
+          owner_lc="${GITHUB_REPOSITORY_OWNER,,}"
+          chart_version="${{ steps.versions.outputs.chart_version }}"
+          {
+            echo "### Published"
+            echo ""
+            echo "- Chart: \`oci://ghcr.io/${owner_lc}/charts/clonarr\`"
+            echo "- Chart version: \`${chart_version}\`"
+            echo "- App version: \`${{ steps.versions.outputs.app_version }}\`"
+            echo ""
+            echo "Install with:"
+            echo ""
+            echo '```bash'
+            echo "helm install clonarr oci://ghcr.io/${owner_lc}/charts/clonarr --version ${chart_version}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

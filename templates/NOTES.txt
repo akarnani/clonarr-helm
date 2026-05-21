@@ -1,0 +1,16 @@
+Clonarr has been deployed!
+
+1. Access the UI:
+{{- if .Values.ingress.enabled }}
+  http{{ if (index .Values.ingress.tls 0) }}s{{ end }}://{{ (index .Values.ingress.hosts 0).host }}
+{{- else }}
+  kubectl port-forward svc/{{ include "clonarr.fullname" . }} 6060:{{ .Values.service.port }}
+  Then open http://localhost:6060
+{{- end }}
+
+2. Reaching Radarr/Sonarr on the macOS host:
+   From inside the k8s pod, use "host.docker.internal" as the hostname
+   for your Radarr/Sonarr instances (e.g. http://host.docker.internal:7878).
+
+3. Config is persisted to {{ .Values.persistence.hostPath }} on the host
+   filesystem so Time Machine can back it up.

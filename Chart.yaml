@@ -1,0 +1,6 @@
+apiVersion: v2
+name: clonarr
+description: A Helm chart for Clonarr - visual TRaSH Guides sync tool for Radarr and Sonarr
+type: application
+version: 0.1.0
+appVersion: "latest"

@@ -1,0 +1,65 @@
+{{- if and .Values.ingress.enabled .Values.tailscaleIngress.enabled -}}
+{{- fail "ingress.enabled and tailscaleIngress.enabled are mutually exclusive — pick one" -}}
+{{- end -}}
+{{- if .Values.tailscaleIngress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "clonarr.fullname" . }}
+  labels:
+    {{- include "clonarr.labels" . | nindent 4 }}
+  {{- if .Values.tailscaleIngress.httpRedirect }}
+  annotations:
+    tailscale.com/http-redirect: "true"
+  {{- end }}
+spec:
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - {{ .Values.tailscaleIngress.hostname | quote }}
+  defaultBackend:
+    service:
+      name: {{ include "clonarr.fullname" . }}
+      port:
+        name: http
+{{- else if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "clonarr.fullname" . }}
+  labels:
+    {{- include "clonarr.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- range .Values.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "clonarr.fullname" $ }}
+                port:
+                  name: http
+          {{- end }}
+    {{- end }}
+{{- end }}

@@ -1,0 +1,65 @@
+image:
+  repository: ghcr.io/prophetse7en/clonarr
+  # Pin by digest for safety. These are the digests for the "latest" tag
+  # as of 2026-05-21. Update as needed.
+  # To use a tag instead, set digest to "" and set tag.
+  tag: "latest"
+  digest:
+    amd64: "sha256:d39fcfd5589c2911633bed86cd7e1e3a20a5bbb547480b286b7c9aceb37e68e7"
+    arm64: "sha256:82988e8fd95cc8777c401b7655bed920691a7d27d640c174ae31e58166d33f21"
+  pullPolicy: IfNotPresent
+
+env:
+  TZ: "America/New_York"
+  PUID: "1000"
+  PGID: "1000"
+  # URL_BASE: "/clonarr"
+  # TRUSTED_NETWORKS: ""
+  # TRUSTED_PROXIES: ""
+
+service:
+  type: ClusterIP
+  port: 6060
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: clonarr.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Convenience preset for the Tailscale Kubernetes operator's Ingress mode.
+# When enabled, renders an Ingress with ingressClassName: tailscale,
+# TLS via Tailscale's MagicDNS cert, and (optionally) HTTP -> HTTPS redirect.
+# Mutually exclusive with `ingress.enabled` above.
+tailscaleIngress:
+  enabled: false
+  # The first DNS label of your tailnet hostname.
+  # Becomes <hostname>.<tailnet>.ts.net
+  hostname: clonarr
+  # Requires Tailscale operator v1.92.0+ (Dec 2025).
+  httpRedirect: true
+
+persistence:
+  # hostPath mount so config lands on the macOS filesystem for Time Machine backup
+  hostPath: /Users/Shared/clonarr-config
+  # Path inside the container
+  mountPath: /config
+
+# On Rancher Desktop (macOS), host.docker.internal resolves to the host.
+# Use this when Radarr/Sonarr run as native macOS apps.
+hostNetwork:
+  # If you need the pod on the host network instead of using DNS, set to true
+  enabled: false
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

@@ -1,0 +1,6 @@
+# Helm package output
+dist/
+*.tgz
+
+# Claude Code local settings
+.claude/settings.local.json
