@@ -1,12 +1,13 @@
 image:
   repository: ghcr.io/prophetse7en/clonarr
-  # Pin by digest for safety. These are the digests for the "latest" tag
-  # as of 2026-05-21. Update as needed.
-  # To use a tag instead, set digest to "" and set tag.
+  # Pin by multi-arch manifest list digest. The registry serves the right
+  # per-arch image (amd64 or arm64) automatically based on the node's arch.
+  # Look up with:
+  #   docker buildx imagetools inspect ghcr.io/prophetse7en/clonarr:<tag>
+  # This digest corresponds to the "latest" tag as of 2026-05-21.
+  # To use a tag instead, set digest to "".
   tag: "latest"
-  digest:
-    amd64: "sha256:d39fcfd5589c2911633bed86cd7e1e3a20a5bbb547480b286b7c9aceb37e68e7"
-    arm64: "sha256:82988e8fd95cc8777c401b7655bed920691a7d27d640c174ae31e58166d33f21"
+  digest: "sha256:7541c15ad2400553e03ed2897ac79affb20bb622e9d2d8c296581c8ff0bd729b"
   pullPolicy: IfNotPresent
 
 env:

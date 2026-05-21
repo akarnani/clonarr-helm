@@ -39,18 +39,13 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Resolve the image reference. Uses digest if set, otherwise tag.
-Rancher Desktop on Apple Silicon uses Rosetta (x86_64), so default to amd64.
+Resolve the image reference. Uses the multi-arch manifest list digest if
+set, otherwise falls back to the tag. The registry selects the right
+per-arch image at pull time.
 */}}
 {{- define "clonarr.image" -}}
 {{- if .Values.image.digest }}
-{{- if .Values.image.digest.amd64 }}
-{{- printf "%s@%s" .Values.image.repository .Values.image.digest.amd64 }}
-{{- else if .Values.image.digest.arm64 }}
-{{- printf "%s@%s" .Values.image.repository .Values.image.digest.arm64 }}
-{{- else }}
 {{- printf "%s@%s" .Values.image.repository .Values.image.digest }}
-{{- end }}
 {{- else }}
 {{- printf "%s:%s" .Values.image.repository .Values.image.tag }}
 {{- end }}

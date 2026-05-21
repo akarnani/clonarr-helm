@@ -26,9 +26,16 @@ helm install clonarr oci://ghcr.io/akarnani/charts/clonarr \
 
 ### Image digest pinning
 
-Images are pinned by SHA256 digest by default (per-arch), not by tag. To bump,
-update `image.digest.amd64` / `image.digest.arm64` in `values.yaml`. To use a
-floating tag instead, set `image.digest: ""` and `image.tag: "<tag>"`.
+Images are pinned by a **multi-arch manifest list digest**, so the same digest
+works on amd64 and arm64 nodes — the registry serves the right per-arch image
+automatically at pull time. To bump:
+
+```bash
+docker buildx imagetools inspect ghcr.io/prophetse7en/clonarr:<tag>
+# copy the top-level "Digest:" line into image.digest in values.yaml
+```
+
+To use a floating tag instead, set `image.digest: ""` and `image.tag: "<tag>"`.
 
 ### Reaching Radarr/Sonarr on the macOS host
 

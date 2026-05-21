@@ -10,8 +10,10 @@ upstream chart — opinionated defaults are intentional.
 
 ## Project conventions
 
-- **Image pinning**: always by digest, not tag. `image.digest.amd64` and
-  `image.digest.arm64` in `values.yaml`. Update both when bumping.
+- **Image pinning**: always by **multi-arch manifest list digest** (single
+  string in `image.digest`), not by per-arch digest or tag. Look up with
+  `docker buildx imagetools inspect ghcr.io/prophetse7en/clonarr:<tag>` and
+  copy the top-level `Digest:` line.
 - **Persistence**: hostPath to `/Users/Shared/clonarr-config` so the Mac's
   Time Machine picks it up. Do not switch to a PVC by default.
 - **Host networking quirks**: the *arr apps run as native macOS apps on the
